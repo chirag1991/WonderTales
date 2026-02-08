@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import UploadArea from './UploadArea'
 import { useStoryStore } from '../store/useStoryStore'
 import { pickRandom } from '../utils/storyTransforms'
@@ -29,8 +31,47 @@ const StoryForm = () => {
   const setImage = useStoryStore((state) => state.setImage)
   const generateStory = useStoryStore((state) => state.generateStory)
   const isLoading = useStoryStore((state) => state.isLoading)
+  const cooldownUntil = useStoryStore((state) => state.cooldownUntil)
+  const isOnline = useStoryStore((state) => state.isOnline)
+  const story = useStoryStore((state) => state.story)
   const error = useStoryStore((state) => state.error)
   const clearError = useStoryStore((state) => state.clearError)
+  const [cooldownSeconds, setCooldownSeconds] = useState(0)
+  const [shouldNavigate, setShouldNavigate] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!cooldownUntil) {
+      setCooldownSeconds(0)
+      return
+    }
+
+    const updateCountdown = () => {
+      const remaining = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000))
+      setCooldownSeconds(remaining)
+    }
+
+    updateCountdown()
+    const interval = window.setInterval(updateCountdown, 500)
+
+    return () => window.clearInterval(interval)
+  }, [cooldownUntil])
+
+  useEffect(() => {
+    if (!shouldNavigate || isLoading) {
+      return
+    }
+
+    if (story) {
+      navigate('/story')
+      setShouldNavigate(false)
+      return
+    }
+
+    if (error) {
+      setShouldNavigate(false)
+    }
+  }, [error, isLoading, navigate, shouldNavigate, story])
 
   const handleSurprise = () => {
     updateForm({
@@ -48,33 +89,39 @@ const StoryForm = () => {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+      <div className="wt-card space-y-6">
+        {!isOnline && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+            You're offline — you can read saved stories, but can't generate new ones.
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+            <p className="text-xl font-semibold text-slate-900 dark:text-white">
               Story ingredients
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-base text-slate-500 dark:text-slate-400">
               Mix and match to craft your next adventure.
             </p>
           </div>
           <button
             type="button"
             onClick={handleSurprise}
-            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            className="wt-button-secondary"
           >
             Surprise me
           </button>
         </div>
 
         <form
-          className="mt-6 grid gap-4 sm:grid-cols-2"
+          className="grid gap-5 sm:grid-cols-2"
           onSubmit={(event) => {
             event.preventDefault()
+            setShouldNavigate(true)
             generateStory()
           }}
         >
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200 sm:col-span-2">
+          <label className="wt-label space-y-2 sm:col-span-2">
             Character name *
             <input
               value={formData.characterName}
@@ -84,18 +131,21 @@ const StoryForm = () => {
                   clearError()
                 }
               }}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
               placeholder="Luna, Milo, or any hero"
               required
             />
+            <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
+              Use your child’s name or their favorite hero.
+            </span>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Age range
             <select
               value={formData.ageRange}
               onChange={(event) => updateForm({ ageRange: event.target.value as typeof formData.ageRange })}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {ageRanges.map((range) => (
                 <option key={range} value={range}>
@@ -105,7 +155,7 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Story length
             <select
               value={formData.storyLength}
@@ -114,7 +164,7 @@ const StoryForm = () => {
                   storyLength: event.target.value as typeof formData.storyLength,
                 })
               }
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {storyLengths.map((length) => (
                 <option key={length} value={length}>
@@ -124,12 +174,12 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Genre
             <select
               value={formData.genre}
               onChange={(event) => updateForm({ genre: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {genres.map((genre) => (
                 <option key={genre} value={genre}>
@@ -139,12 +189,12 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Setting
             <select
               value={formData.setting}
               onChange={(event) => updateForm({ setting: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {settings.map((setting) => (
                 <option key={setting} value={setting}>
@@ -154,12 +204,12 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Theme
             <select
               value={formData.theme}
               onChange={(event) => updateForm({ theme: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {themes.map((theme) => (
                 <option key={theme} value={theme}>
@@ -169,12 +219,12 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Moral
             <select
               value={formData.moral}
               onChange={(event) => updateForm({ moral: event.target.value })}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {morals.map((moral) => (
                 <option key={moral} value={moral}>
@@ -184,12 +234,12 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Tone
             <select
               value={formData.tone}
               onChange={(event) => updateForm({ tone: event.target.value as typeof formData.tone })}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {tones.map((tone) => (
                 <option key={tone} value={tone}>
@@ -199,7 +249,7 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label className="wt-label space-y-2">
             Reading level
             <select
               value={formData.readingLevel}
@@ -208,7 +258,7 @@ const StoryForm = () => {
                   readingLevel: event.target.value as typeof formData.readingLevel,
                 })
               }
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="wt-input"
             >
               {readingLevels.map((level) => (
                 <option key={level} value={level}>
@@ -218,11 +268,11 @@ const StoryForm = () => {
             </select>
           </label>
 
-          <div className="sm:col-span-2">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          <div className="sm:col-span-2 space-y-2">
+            <p className="wt-label">
               Optional image upload
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Add a picture to inspire story details.
             </p>
             <div className="mt-3">
@@ -243,15 +293,30 @@ const StoryForm = () => {
             <div className="sticky bottom-0 -mx-6 mt-4 flex flex-col gap-3 border-t border-slate-200 bg-white/90 px-6 py-4 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0 dark:border-slate-800 dark:bg-slate-950/80">
               <button
                 type="submit"
-                disabled={isLoading}
-                className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-slate-400 dark:bg-white dark:text-slate-900"
+                disabled={isLoading || cooldownSeconds > 0 || !isOnline}
+                className="wt-button-primary"
+                title={!isOnline ? 'Go online to generate a new story.' : undefined}
               >
-                {isLoading ? 'Creating story...' : 'Create story'}
+                {isLoading && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white dark:border-slate-300/40 dark:border-t-slate-900" />
+                )}
+                {isLoading
+                  ? 'Creating story...'
+                  : cooldownSeconds > 0
+                    ? `Try again in ${cooldownSeconds}s`
+                    : !isOnline
+                      ? 'Offline'
+                      : 'Create story'}
               </button>
+              {!isOnline && (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Connect to the internet to generate a new story.
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handleSurprise}
-                className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                className="wt-button-secondary"
               >
                 Surprise me again
               </button>

@@ -14,11 +14,33 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-slate-50 text-base text-slate-900 antialiased;
     font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   }
 
   .dark body {
     @apply bg-slate-950 text-slate-100;
+  }
+}
+
+@layer components {
+  .wt-card {
+    @apply rounded-3xl border border-slate-200 bg-white/85 p-card shadow-sm dark:border-slate-800 dark:bg-slate-950/70;
+  }
+
+  .wt-label {
+    @apply text-base font-semibold text-slate-700 dark:text-slate-200;
+  }
+
+  .wt-input {
+    @apply w-full min-h-[48px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm focus:border-amber-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100;
+  }
+
+  .wt-button-primary {
+    @apply inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-slate-400 dark:bg-white dark:text-slate-900;
+  }
+
+  .wt-button-secondary {
+    @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-base font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200;
   }
 }
