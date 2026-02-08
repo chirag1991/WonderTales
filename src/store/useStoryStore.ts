@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Story, StoryFormData } from '../types/story'
-import { generateMockStory } from '../utils/storyGenerator'
+import { generateStoryFromApi } from '../utils/storyGenerator'
 
 export type ThemeMode = 'light' | 'dark'
 
@@ -9,6 +9,8 @@ interface StoryState {
   story: Story | null
   history: Story[]
   isLoading: boolean
+  lastRequestAt: number | null
+  cooldownUntil: number | null
   error: string | null
   theme: ThemeMode
   updateForm: (patch: Partial<StoryFormData>) => void
@@ -58,6 +60,8 @@ export const useStoryStore = create<StoryState>((set, get) => {
     story: null,
     history: [],
     isLoading: false,
+    lastRequestAt: null,
+    cooldownUntil: null,
     error: null,
     theme: initialTheme,
     updateForm: (patch) =>
@@ -69,21 +73,53 @@ export const useStoryStore = create<StoryState>((set, get) => {
         formData: { ...state.formData, imageDataUrl },
       })),
     generateStory: async () => {
-      const { formData } = get()
+      const { formData, isLoading, lastRequestAt, cooldownUntil } = get()
       if (!formData.characterName.trim()) {
         set({ error: 'Please add a character name to begin the story.' })
         return
       }
 
-      set({ isLoading: true, error: null })
+      if (isLoading) {
+        return
+      }
+
+      const now = Date.now()
+      if (cooldownUntil && now < cooldownUntil) {
+        const remainingSeconds = Math.ceil((cooldownUntil - now) / 1000)
+        set({
+          error: `Rate limit reached, try again in ${remainingSeconds} seconds`,
+        })
+        return
+      }
+      if (lastRequestAt && now - lastRequestAt < 20000) {
+        set({
+          error: 'Please wait a few seconds before creating another story.',
+        })
+        return
+      }
+
+      set({ isLoading: true, error: null, lastRequestAt: now })
       try {
-        await new Promise((resolve) => setTimeout(resolve, 650))
-        const story = generateMockStory(formData)
+        const story = await generateStoryFromApi(formData)
         set((state) => ({
           story,
           history: [story, ...state.history].slice(0, 8),
         }))
       } catch (error) {
+        const retryAfterSeconds =
+          typeof (error as Error & { retryAfterSeconds?: number })
+            .retryAfterSeconds === 'number'
+            ? (error as Error & { retryAfterSeconds?: number }).retryAfterSeconds
+            : undefined
+
+        if (retryAfterSeconds && retryAfterSeconds > 0) {
+          const nextCooldownUntil = Date.now() + retryAfterSeconds * 1000
+          set({
+            cooldownUntil: nextCooldownUntil,
+            error: `Rate limit reached, try again in ${retryAfterSeconds} seconds`,
+          })
+          return
+        }
         set({
           error:
             error instanceof Error

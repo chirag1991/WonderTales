@@ -13,6 +13,9 @@
 	If no appropriate projectType is available, search documentation using available tools.
 	Otherwise, create the project structure manually using available file creation tools.
 	-->
+## API Reference
+Name = WonderTalesAPI
+Key = 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
 
 - [x] Customize the Project
 	<!--

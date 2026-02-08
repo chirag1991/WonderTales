@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import UploadArea from './UploadArea'
 import { useStoryStore } from '../store/useStoryStore'
 import { pickRandom } from '../utils/storyTransforms'
@@ -29,8 +30,27 @@ const StoryForm = () => {
   const setImage = useStoryStore((state) => state.setImage)
   const generateStory = useStoryStore((state) => state.generateStory)
   const isLoading = useStoryStore((state) => state.isLoading)
+  const cooldownUntil = useStoryStore((state) => state.cooldownUntil)
   const error = useStoryStore((state) => state.error)
   const clearError = useStoryStore((state) => state.clearError)
+  const [cooldownSeconds, setCooldownSeconds] = useState(0)
+
+  useEffect(() => {
+    if (!cooldownUntil) {
+      setCooldownSeconds(0)
+      return
+    }
+
+    const updateCountdown = () => {
+      const remaining = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000))
+      setCooldownSeconds(remaining)
+    }
+
+    updateCountdown()
+    const interval = window.setInterval(updateCountdown, 500)
+
+    return () => window.clearInterval(interval)
+  }, [cooldownUntil])
 
   const handleSurprise = () => {
     updateForm({
@@ -243,10 +263,17 @@ const StoryForm = () => {
             <div className="sticky bottom-0 -mx-6 mt-4 flex flex-col gap-3 border-t border-slate-200 bg-white/90 px-6 py-4 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0 dark:border-slate-800 dark:bg-slate-950/80">
               <button
                 type="submit"
-                disabled={isLoading}
-                className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-slate-400 dark:bg-white dark:text-slate-900"
+                disabled={isLoading || cooldownSeconds > 0}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-slate-400 dark:bg-white dark:text-slate-900"
               >
-                {isLoading ? 'Creating story...' : 'Create story'}
+                {isLoading && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white dark:border-slate-300/40 dark:border-t-slate-900" />
+                )}
+                {isLoading
+                  ? 'Creating story...'
+                  : cooldownSeconds > 0
+                    ? `Try again in ${cooldownSeconds}s`
+                    : 'Create story'}
               </button>
               <button
                 type="button"
