@@ -11,6 +11,7 @@ interface StoryState {
   isLoading: boolean
   lastRequestAt: number | null
   cooldownUntil: number | null
+  isOnline: boolean
   error: string | null
   theme: ThemeMode
   updateForm: (patch: Partial<StoryFormData>) => void
@@ -51,17 +52,53 @@ const applyTheme = (theme: ThemeMode) => {
   document.documentElement.classList.toggle('dark', theme === 'dark')
 }
 
+const HISTORY_STORAGE_KEY = 'wt-story-history'
+
+const loadStoredHistory = (): Story[] => {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY)
+  if (!raw) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as Story[]) : []
+  } catch (error) {
+    return []
+  }
+}
+
+const saveHistory = (history: Story[]) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history))
+}
+
 export const useStoryStore = create<StoryState>((set, get) => {
   const initialTheme = getInitialTheme()
   applyTheme(initialTheme)
+  const initialHistory = loadStoredHistory()
+  const initialOnline = typeof navigator === 'undefined' ? true : navigator.onLine
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => set({ isOnline: true }))
+    window.addEventListener('offline', () => set({ isOnline: false }))
+  }
 
   return {
     formData: initialFormData,
     story: null,
-    history: [],
+    history: initialHistory,
     isLoading: false,
     lastRequestAt: null,
     cooldownUntil: null,
+    isOnline: initialOnline,
     error: null,
     theme: initialTheme,
     updateForm: (patch) =>
@@ -73,13 +110,21 @@ export const useStoryStore = create<StoryState>((set, get) => {
         formData: { ...state.formData, imageDataUrl },
       })),
     generateStory: async () => {
-      const { formData, isLoading, lastRequestAt, cooldownUntil } = get()
+      const { formData, isLoading, lastRequestAt, cooldownUntil, isOnline } = get()
       if (!formData.characterName.trim()) {
         set({ error: 'Please add a character name to begin the story.' })
         return
       }
 
       if (isLoading) {
+        return
+      }
+
+      if (!isOnline) {
+        set({
+          error:
+            "You're offline — you can read saved stories, but can't generate new ones.",
+        })
         return
       }
 
@@ -101,10 +146,14 @@ export const useStoryStore = create<StoryState>((set, get) => {
       set({ isLoading: true, error: null, lastRequestAt: now })
       try {
         const story = await generateStoryFromApi(formData)
-        set((state) => ({
-          story,
-          history: [story, ...state.history].slice(0, 8),
-        }))
+        set((state) => {
+          const nextHistory = [story, ...state.history].slice(0, 8)
+          saveHistory(nextHistory)
+          return {
+            story,
+            history: nextHistory,
+          }
+        })
       } catch (error) {
         const retryAfterSeconds =
           typeof (error as Error & { retryAfterSeconds?: number })

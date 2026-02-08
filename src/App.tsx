@@ -1,8 +1,14 @@
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
-import StoryForm from './components/StoryForm'
-import StoryOutput from './components/StoryOutput'
+import Stepper from './components/Stepper'
+import IngredientsPage from './pages/IngredientsPage'
+import StoryPage from './pages/StoryPage'
 
 function App() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isStoryStep = location.pathname.startsWith('/story')
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
@@ -12,10 +18,27 @@ function App() {
 
       <div className="relative">
         <Header />
+        <div className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur md:static dark:border-slate-800/80 dark:bg-slate-950/70">
+          <Stepper />
+        </div>
 
-        <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-8">
-          <StoryForm />
-          <StoryOutput />
+        <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6">
+          {isStoryStep && (
+            <div className="flex justify-start">
+              <button
+                type="button"
+                onClick={() => navigate('/ingredients')}
+                className="wt-button-secondary min-h-[56px] px-6 text-base"
+              >
+                Back to Ingredients
+              </button>
+            </div>
+          )}
+          <Routes>
+            <Route path="/" element={<Navigate to="/ingredients" replace />} />
+            <Route path="/ingredients" element={<IngredientsPage />} />
+            <Route path="/story" element={<StoryPage />} />
+          </Routes>
         </main>
       </div>
     </div>
