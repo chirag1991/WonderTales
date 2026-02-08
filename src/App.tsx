@@ -22,7 +22,10 @@ function App() {
           <Stepper />
         </div>
 
-        <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6">
+        <main
+          key={location.pathname}
+          className="wt-page mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6"
+        >
           {isStoryStep && (
             <div className="flex justify-start">
               <button

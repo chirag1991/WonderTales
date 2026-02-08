@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { exportStoryToPdf } from '../utils/exporters'
 import { useStoryStore } from '../store/useStoryStore'
 import HistoryPanel from './HistoryPanel'
@@ -32,12 +33,15 @@ const StoryOutput = () => {
     window.localStorage.setItem('wt-reading-font', fontSize)
   }, [fontSize])
 
-  const tokens = useMemo(() => {
+  const paragraphs = useMemo(() => {
     if (!story?.content) {
       return []
     }
 
-    return story.content.split(/(\s+)/)
+    return story.content
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
   }, [story?.content])
 
   useEffect(() => {
@@ -70,8 +74,7 @@ const StoryOutput = () => {
     window.speechSynthesis.speak(utterance)
   }
 
-  const storyTextSize =
-    fontSize === 'lg' ? 'text-lg leading-8' : fontSize === 'sm' ? 'text-sm leading-6' : 'text-base leading-7'
+  const storyTextSize = fontSize === 'lg' ? 'text-lg' : fontSize === 'sm' ? 'text-sm' : 'text-base'
 
   return (
     <section className={`space-y-6 ${isReadingMode ? 'mx-auto w-full max-w-5xl' : ''}`}>
@@ -147,13 +150,13 @@ const StoryOutput = () => {
           </div>
         ) : story ? (
           <div className="mt-6 space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {story.title}
               </h2>
-              <p className="text-base text-slate-500 dark:text-slate-400">
-                Moral: {story.moral}
-              </p>
+              <div className="wt-moral text-base">
+                <span className="font-semibold">Moral:</span> {story.moral}
+              </div>
             </div>
             {story.formData.imageDataUrl && (
               <img
@@ -162,29 +165,60 @@ const StoryOutput = () => {
                 className="h-40 w-full rounded-2xl object-cover"
               />
             )}
-            <div className={`whitespace-pre-line text-slate-700 dark:text-slate-200 ${storyTextSize}`}>
-              {tokens.map((token, index) => {
-                if (token.trim() === '') {
-                  return <span key={`${index}-space`}>{token}</span>
-                }
-
-                const word = getSpeakableWord(token)
-                if (!word) {
-                  return <span key={`${index}-punct`}>{token}</span>
-                }
+            <div className={`wt-storybook ${storyTextSize}`}>
+              {paragraphs.map((paragraph, paragraphIndex) => {
+                const tokens = paragraph.split(/(\s+)/)
+                let dropcapUsed = false
 
                 return (
-                  <span
-                    key={`${index}-${token}`}
-                    onClick={() => speakWord(word, index)}
-                    className={`cursor-pointer rounded px-0.5 transition hover:bg-amber-200/60 dark:hover:bg-amber-400/20 ${
-                      activeTokenIndex === index
-                        ? 'bg-amber-200/80 text-amber-950 dark:bg-amber-400/30 dark:text-amber-100'
-                        : ''
-                    }`}
+                  <p
+                    key={`paragraph-${paragraphIndex}`}
+                    className="wt-story-paragraph"
                   >
-                    {token}
-                  </span>
+                    {tokens.map((token, index) => {
+                      if (token.trim() === '') {
+                        return <span key={`${paragraphIndex}-${index}-space`}>{token}</span>
+                      }
+
+                      const word = getSpeakableWord(token)
+                      if (!word) {
+                        return <span key={`${paragraphIndex}-${index}-punct`}>{token}</span>
+                      }
+
+                      let displayToken: ReactNode = token
+
+                      if (paragraphIndex === 0 && !dropcapUsed) {
+                        const firstCharIndex = token.search(/[A-Za-z0-9]/)
+                        if (firstCharIndex >= 0) {
+                          dropcapUsed = true
+                          const prefix = token.slice(0, firstCharIndex)
+                          const firstChar = token[firstCharIndex]
+                          const rest = token.slice(firstCharIndex + 1)
+                          displayToken = (
+                            <>
+                              {prefix}
+                              <span className="wt-dropcap">{firstChar}</span>
+                              {rest}
+                            </>
+                          )
+                        }
+                      }
+
+                      return (
+                        <span
+                          key={`${paragraphIndex}-${index}-${token}`}
+                          onClick={() => speakWord(word, paragraphIndex * 10000 + index)}
+                          className={`cursor-pointer rounded px-0.5 transition hover:bg-amber-200/60 dark:hover:bg-amber-400/20 ${
+                            activeTokenIndex === paragraphIndex * 10000 + index
+                              ? 'bg-amber-200/80 text-amber-950 dark:bg-amber-400/30 dark:text-amber-100'
+                              : ''
+                          }`}
+                        >
+                          {displayToken}
+                        </span>
+                      )
+                    })}
+                  </p>
                 )
               })}
             </div>
