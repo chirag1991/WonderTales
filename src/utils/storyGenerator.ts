@@ -11,7 +11,11 @@ const createId = () => {
 export const generateStoryFromApi = async (
   formData: StoryFormData,
 ): Promise<Story> => {
-  const response = await fetch('http://localhost:3001/api/story', {
+  const baseUrl =
+    import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
+  const apiUrl = `${baseUrl.replace(/\/$/, '')}/api/story`
+
+  const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
