@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import type { Story } from '../types/story'
+import type { Story } from '@/types/story'
 
 const sanitizeFileName = (value: string) =>
   value.replace(/[^a-z0-9\- ]/gi, '').trim() || 'wondertales-story'

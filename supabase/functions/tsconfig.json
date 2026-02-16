@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": "../.."
+  },
+  "include": ["./**/*.ts", "./deno.d.ts"]
+}

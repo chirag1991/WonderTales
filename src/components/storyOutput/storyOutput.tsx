@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { exportStoryToPdf } from '../utils/exporters'
-import { useStoryStore } from '../store/useStoryStore'
-import HistoryPanel from './HistoryPanel'
+import { exportStoryToPdf } from '@/utils/exporters'
+import { useStoryStore } from '@/store/useStoryStore'
+import HistoryPanel from '@/components/historyPanel/historyPanel'
 
 const StoryOutput = () => {
   const story = useStoryStore((state) => state.story)

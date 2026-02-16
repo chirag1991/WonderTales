@@ -10,17 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.4",
-    "express": "^5.2.1",
+    "@supabase/supabase-js": "^2.47.10",
+    "axios": "^1.7.7",
     "jspdf": "^4.1.0",
-    "openai": "^6.18.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "openai": "^6.18.0",
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",

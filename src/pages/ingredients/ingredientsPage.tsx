@@ -1,4 +1,4 @@
-import StoryForm from '../components/StoryForm'
+import StoryForm from '@/components/storyForm/storyForm'
 
 const IngredientsPage = () => {
   return (

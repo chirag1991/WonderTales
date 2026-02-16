@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { Story, StoryFormData } from '../types/story'
-import { generateStoryFromApi } from '../utils/storyGenerator'
+import type { Story, StoryFormData } from '@/types/story'
+import { generateStoryFromApi } from '@/services/storyService'
 
 export type ThemeMode = 'light' | 'dark'
 

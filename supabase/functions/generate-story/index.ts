@@ -1,40 +1,28 @@
-import cors from 'cors'
-import dotenv from 'dotenv'
-import express from 'express'
+/// <reference path="../deno.d.ts" />
+import { corsHeaders } from '../_shared/cors.ts'
 import OpenAI from 'openai'
 
-dotenv.config({ path: './server/.env' })
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
 
-const app = express()
-const port = process.env.PORT || 3001
-const apiKey = process.env.OPENAI_API_KEY
+  const jsonResponse = (data: unknown, status: number) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
 
-console.log(
-  `OPENAI_API_KEY loaded: ${apiKey ? 'yes' : 'no'}`,
-)
-
-if (!apiKey) {
-  console.warn('Missing OPENAI_API_KEY in environment variables.')
-}
-
-const client = new OpenAI({ apiKey })
-
-app.use(cors())
-app.use(express.json({ limit: '1mb' }))
-
-app.get('/health', (_req, res) => {
-  console.log('Health check pinged')
-  return res.status(200).json({ status: 'ok' })
-})
-
-app.post('/api/story', async (req, res) => {
   try {
-    if (!req.is('application/json')) {
-      return res.status(415).json({
-        error: 'Content-Type must be application/json.',
-      })
+    const contentType = req.headers.get('content-type') ?? ''
+    if (!contentType.includes('application/json')) {
+      return jsonResponse(
+        { error: 'Content-Type must be application/json.' },
+        415,
+      )
     }
 
+    const body = (await req.json()) as Record<string, unknown>
     const {
       characterName,
       ageRange,
@@ -45,7 +33,7 @@ app.post('/api/story', async (req, res) => {
       tone,
       readingLevel,
       moral,
-    } = req.body || {}
+    } = body || {}
 
     const missingFields = [
       ['characterName', characterName],
@@ -62,18 +50,24 @@ app.post('/api/story', async (req, res) => {
       .map(([key]) => key)
 
     if (missingFields.length) {
-      return res.status(400).json({
-        error: 'Missing required fields.',
-        details: missingFields,
-      })
+      return jsonResponse(
+        { error: 'Missing required fields.', details: missingFields },
+        400,
+      )
     }
 
+    const apiKey = Deno.env.get('OPENAI_API_KEY')
     if (!apiKey) {
-      return res.status(500).json({
-        error: 'Server missing API configuration.',
-        details: 'OPENAI_API_KEY is not set in the environment.',
-      })
+      return jsonResponse(
+        {
+          error: 'Server missing API configuration.',
+          details: 'OPENAI_API_KEY is not set in the environment.',
+        },
+        500,
+      )
     }
+
+    const client = new OpenAI({ apiKey })
 
     const prompt = {
       characterName,
@@ -101,20 +95,23 @@ app.post('/api/story', async (req, res) => {
 
     const outputText = response.output_text
     if (!outputText) {
-      return res.status(500).json({
-        error: 'Empty response from model.',
-        details: 'OpenAI returned no output_text.',
-      })
+      return jsonResponse(
+        {
+          error: 'Empty response from model.',
+          details: 'OpenAI returned no output_text.',
+        },
+        500,
+      )
     }
 
-    let payload
+    let payload: Record<string, string>
     try {
-      payload = JSON.parse(outputText)
-    } catch (parseError) {
-      return res.status(500).json({
-        error: 'Invalid JSON returned by model.',
-        details: outputText,
-      })
+      payload = JSON.parse(outputText) as Record<string, string>
+    } catch {
+      return jsonResponse(
+        { error: 'Invalid JSON returned by model.', details: outputText },
+        500,
+      )
     }
 
     const normalized = {
@@ -141,30 +138,29 @@ app.post('/api/story', async (req, res) => {
     }
 
     if (!normalized.title || !normalized.story || !normalized.moral) {
-      return res.status(500).json({
-        error: 'Model response missing required fields.',
-        details: {
-          payload,
-          normalized,
+      return jsonResponse(
+        {
+          error: 'Model response missing required fields.',
+          details: { payload, normalized },
         },
-      })
+        500,
+      )
     }
 
-    return res.status(200).json(normalized)
+    return jsonResponse(normalized, 200)
   } catch (error) {
     console.error('Story generation failed:', error)
-    return res.status(500).json({
-      error: 'Failed to generate story.',
-      details:
-        error instanceof Error
-          ? error.message
-          : typeof error === 'string'
-            ? error
-            : error,
-    })
+    return jsonResponse(
+      {
+        error: 'Failed to generate story.',
+        details:
+          error instanceof Error
+            ? error.message
+            : typeof error === 'string'
+              ? error
+              : String(error),
+      },
+      500,
+    )
   }
-})
-
-app.listen(port, () => {
-  console.log(`WonderTales API running on http://localhost:${port}`)
 })
