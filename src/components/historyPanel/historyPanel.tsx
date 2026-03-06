@@ -1,4 +1,4 @@
-import { useStoryStore } from '../store/useStoryStore'
+import { useStoryStore } from '@/store/useStoryStore'
 
 const HistoryPanel = () => {
   const history = useStoryStore((state) => state.history)

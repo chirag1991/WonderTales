@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import UploadArea from './UploadArea'
-import { useStoryStore } from '../store/useStoryStore'
-import { pickRandom } from '../utils/storyTransforms'
+import UploadArea from '@/components/uploadArea/uploadArea'
+import { useStoryStore } from '@/store/useStoryStore'
+import { pickRandom } from '@/utils/storyTransforms'
 
 const ageRanges = ['3-5', '6-8', '9-12', '13+'] as const
 const storyLengths = ['short', 'medium', 'long'] as const
@@ -136,7 +136,7 @@ const StoryForm = () => {
               required
             />
             <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
-              Use your child’s name or their favorite hero.
+              Use your child's name or their favorite hero.
             </span>
           </label>
 

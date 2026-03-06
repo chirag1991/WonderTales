@@ -1,4 +1,4 @@
-import { useStoryStore } from '../store/useStoryStore'
+import { useStoryStore } from '@/store/useStoryStore'
 
 const Header = () => {
   const theme = useStoryStore((state) => state.theme)
