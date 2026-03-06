@@ -1,5 +1,6 @@
 import type { StoryFormData } from '@/types/story'
-import { supabase } from '@/config/supabase'
+import axiosClient from '@/api/axiosClient'
+import API_URLS from '@/api/apiUrls'
 
 export type GenerateStoryResponse = {
   title: string
@@ -15,15 +16,22 @@ export type GenerateStoryError = {
 export const invokeGenerateStory = async (
   formData: StoryFormData,
 ): Promise<GenerateStoryResponse> => {
-  const { data, error } = await supabase.functions.invoke('generate-story', {
-    body: formData,
-  })
+  try {
+    const response = await axiosClient.post(API_URLS.story, formData)
+    const result = response.data as GenerateStoryResponse
 
-  if (error) {
-    const message = error.message ?? 'Story request failed'
-    const retryAfterSeconds =
-      (error as { retryAfterSeconds?: number }).retryAfterSeconds ??
-      (error as { retry_after_seconds?: number }).retry_after_seconds
+    if (!result?.title || !result?.story || !result?.moral) {
+      throw new Error(
+        result
+          ? 'Story response was missing required fields.'
+          : 'Empty response from story generation.',
+      )
+    }
+
+    return result
+  } catch (error: any) {
+    const message = error.response?.data?.error || error.message || 'Story request failed'
+    const retryAfterSeconds = error.response?.data?.retryAfterSeconds
 
     const err = new Error(message) as Error & { retryAfterSeconds?: number }
     if (typeof retryAfterSeconds === 'number') {
@@ -31,15 +39,4 @@ export const invokeGenerateStory = async (
     }
     throw err
   }
-
-  const result = data as GenerateStoryResponse | null
-  if (!result?.title || !result?.story || !result?.moral) {
-    throw new Error(
-      result
-        ? 'Story response was missing required fields.'
-        : 'Empty response from story generation.',
-    )
-  }
-
-  return result
 }
