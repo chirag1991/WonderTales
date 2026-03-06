@@ -2,36 +2,36 @@ import { NavLink } from 'react-router-dom'
 
 const Stepper = () => {
   return (
-    <div className="mx-auto flex w-full max-w-6xl items-center gap-3 text-base font-semibold">
+    <div className="inline-flex h-11 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
       <NavLink
         to="/ingredients"
         className={({ isActive }) =>
-          `flex flex-1 items-center justify-between gap-3 rounded-full px-5 py-3 transition ${
+          `inline-flex items-center justify-center whitespace-nowrap rounded-md px-6 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
             isActive
-              ? 'bg-amber-200 text-amber-950 shadow-md'
-              : 'bg-white text-slate-600 hover:text-slate-900'
-          } dark:bg-slate-900 dark:text-slate-200 dark:hover:text-white`
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-50'
+              : 'hover:bg-white/50 hover:text-slate-900 dark:hover:bg-slate-800/50 dark:hover:text-slate-50'
+          }`
         }
       >
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-amber-900 shadow-sm dark:bg-slate-950 dark:text-amber-200">
-          1
+        <span className="flex items-center gap-2">
+          <span>🎭</span>
+          <span>Hero</span>
         </span>
-        <span className="flex-1 text-left">Ingredients</span>
       </NavLink>
       <NavLink
         to="/story"
         className={({ isActive }) =>
-          `flex flex-1 items-center justify-between gap-3 rounded-full px-5 py-3 transition ${
+          `inline-flex items-center justify-center whitespace-nowrap rounded-md px-6 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
             isActive
-              ? 'bg-sky-200 text-sky-950 shadow-md'
-              : 'bg-white text-slate-600 hover:text-slate-900'
-          } dark:bg-slate-900 dark:text-slate-200 dark:hover:text-white`
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-50'
+              : 'hover:bg-white/50 hover:text-slate-900 dark:hover:bg-slate-800/50 dark:hover:text-slate-50'
+          }`
         }
       >
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-sky-900 shadow-sm dark:bg-slate-950 dark:text-sky-200">
-          2
+        <span className="flex items-center gap-2">
+          <span>📖</span>
+          <span>Story</span>
         </span>
-        <span className="flex-1 text-left">Your Story</span>
       </NavLink>
     </div>
   )

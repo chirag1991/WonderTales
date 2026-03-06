@@ -14,12 +14,31 @@
   }
 
   body {
-    @apply bg-slate-50 text-base text-slate-900 antialiased;
+    @apply bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 text-base text-slate-900 antialiased;
     font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   }
 
   .dark body {
     @apply bg-slate-950 text-slate-100;
+  }
+
+  /* Playful button animations */
+  @keyframes gentle-bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 20px 40px rgba(168, 85, 247, 0.4), 0 0 60px rgba(236, 72, 153, 0.3);
+    }
+    50% {
+      box-shadow: 0 25px 50px rgba(168, 85, 247, 0.6), 0 0 80px rgba(236, 72, 153, 0.5);
+    }
   }
 }
 

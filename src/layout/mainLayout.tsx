@@ -8,33 +8,29 @@ const MainLayout = () => {
   const isStoryStep = location.pathname.startsWith('/story')
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-gradient-to-br from-amber-200/70 via-pink-200/60 to-sky-200/60 blur-3xl dark:from-amber-400/10 dark:via-fuchsia-400/10 dark:to-sky-400/10" />
-        <div className="absolute -bottom-28 left-0 h-80 w-80 rounded-full bg-gradient-to-br from-sky-200/60 via-emerald-200/50 to-amber-200/60 blur-3xl dark:from-indigo-400/10 dark:via-emerald-400/10 dark:to-amber-400/10" />
-      </div>
-
-      <div className="relative">
-        <Header />
-        <div className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur md:static dark:border-slate-800/80 dark:bg-slate-950/70">
+    <div className="relative min-h-screen">
+      <Header />
+      <div className="sticky top-0 z-20 border-b bg-white/80 px-4 py-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80">
+        <div className="mx-auto flex max-w-4xl items-center justify-center">
           <Stepper />
         </div>
-
-        <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6">
-          {isStoryStep && (
-            <div className="flex justify-start">
-              <button
-                type="button"
-                onClick={() => navigate('/ingredients')}
-                className="wt-button-secondary min-h-[56px] px-6 text-base"
-              >
-                Back to Ingredients
-              </button>
-            </div>
-          )}
-          <Outlet />
-        </main>
       </div>
+
+      <main className="mx-auto flex max-w-4xl flex-col gap-6 px-4 pb-16 pt-8 sm:px-6">
+        {isStoryStep && (
+          <div className="flex justify-start">
+            <button
+              type="button"
+              onClick={() => navigate('/ingredients')}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+            >
+              <span>←</span>
+              <span>Back to Ingredients</span>
+            </button>
+          </div>
+        )}
+        <Outlet />
+      </main>
     </div>
   )
 }
